@@ -19,6 +19,11 @@ const SKILL_CATEGORIES = {
   E: { label: "デベロップ" }
 };
 
+const itemStatusMap = {};
+const itemToCategoriesMap = {};
+const categoryItemIds = {};
+const categorySummaryElements = {};
+
 const roadmapData = [
   {
     id: "proposal",
@@ -291,8 +296,16 @@ const roadmapData = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+  initializeCategoryAssignments(roadmapData);
+
   const container = document.getElementById("roadmap");
+  const summarySection = createCategorySummarySection();
+  if (summarySection && container.parentElement) {
+    container.parentElement.insertBefore(summarySection, container);
+  }
+
   container.appendChild(createList(roadmapData));
+  updateAllCategorySummaries();
 });
 
 function createList(items) {
@@ -314,6 +327,17 @@ function createRoadmapItem(item) {
   const storedState = loadItemState(item.id);
   const currentStatus = storedState.status || STATUS_OPTIONS[0];
   listItem.dataset.status = currentStatus;
+
+  const isLeafItem = !item.children || item.children.length === 0;
+
+  if (isLeafItem) {
+    itemStatusMap[item.id] = currentStatus;
+    if (!itemToCategoriesMap[item.id]) {
+      itemToCategoriesMap[item.id] = Array.isArray(item.skillCategories)
+        ? [...item.skillCategories]
+        : [];
+    }
+  }
 
   const headerButton = document.createElement("button");
   headerButton.type = "button";
@@ -400,8 +424,6 @@ function createRoadmapItem(item) {
   const controls = document.createElement("div");
   controls.className = "controls";
 
-  const isLeafItem = !item.children || item.children.length === 0;
-
   if (isLeafItem) {
     const evaluationGroup = document.createElement("div");
     evaluationGroup.className = "evaluation-group";
@@ -429,18 +451,21 @@ function createRoadmapItem(item) {
 
       select.addEventListener("change", (event) => {
         const newValue = event.target.value;
+        const nextState = {
+          ...loadItemState(item.id),
+          [field.key]: newValue
+        };
 
         if (field.key === "status") {
           statusPill.textContent = newValue;
           statusPill.dataset.status = newValue;
           listItem.dataset.status = newValue;
+          itemStatusMap[item.id] = newValue;
           updateCompletionSummaryUpwards(listItem);
+          updateCategorySummariesForItem(item.id);
         }
 
-        saveItemState(item.id, {
-          ...loadItemState(item.id),
-          [field.key]: newValue
-        });
+        saveItemState(item.id, nextState);
       });
 
       fieldWrapper.appendChild(fieldTitle);
@@ -487,7 +512,63 @@ function createRoadmapItem(item) {
     updateCompletionSummary(listItem);
   }
 
+  if (isLeafItem) {
+    updateCategorySummariesForItem(item.id);
+  }
+
   return listItem;
+}
+
+function createCategorySummarySection() {
+  const section = document.createElement("section");
+  section.className = "category-summary";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "分類別習得状況";
+  section.appendChild(heading);
+
+  const list = document.createElement("ul");
+  list.className = "category-summary-list";
+
+  Object.entries(SKILL_CATEGORIES).forEach(([code, info]) => {
+    const itemIds = categoryItemIds[code] || [];
+    const listItem = document.createElement("li");
+    listItem.className = "category-summary-item";
+
+    const codeSpan = document.createElement("span");
+    codeSpan.className = "category-summary-code";
+    codeSpan.textContent = code;
+
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "category-summary-label";
+    labelSpan.textContent = info.label;
+
+    const progressSpan = document.createElement("span");
+    progressSpan.className = "category-summary-progress";
+    progressSpan.textContent = `（0/${itemIds.length}）`;
+
+    const statusSpan = document.createElement("span");
+    statusSpan.className = "category-summary-status";
+    statusSpan.dataset.status = "未修得";
+    statusSpan.textContent = "未修得";
+
+    listItem.appendChild(codeSpan);
+    listItem.appendChild(labelSpan);
+    listItem.appendChild(progressSpan);
+    listItem.appendChild(statusSpan);
+
+    list.appendChild(listItem);
+
+    categorySummaryElements[code] = {
+      item: listItem,
+      progress: progressSpan,
+      status: statusSpan
+    };
+  });
+
+  section.appendChild(list);
+
+  return section;
 }
 
 function updateCompletionSummary(listItem) {
@@ -539,6 +620,91 @@ function updateCompletionSummaryUpwards(listItem) {
 
     current = current.parentElement?.closest(".roadmap-item");
   }
+}
+
+function updateCategorySummariesForItem(itemId) {
+  const categories = itemToCategoriesMap[itemId];
+
+  if (!categories || categories.length === 0) {
+    return;
+  }
+
+  categories.forEach((code) => updateCategorySummary(code));
+}
+
+function updateCategorySummary(code) {
+  const summaryElement = categorySummaryElements[code];
+
+  if (!summaryElement) {
+    return;
+  }
+
+  const itemIds = categoryItemIds[code] || [];
+  const total = itemIds.length;
+  const completed = itemIds.filter(
+    (itemId) => (itemStatusMap[itemId] || STATUS_OPTIONS[0]) === "習得済み"
+  ).length;
+
+  const statusLabel = determineCategoryStatus(total, completed);
+
+  summaryElement.progress.textContent = `（${completed}/${total}）`;
+  summaryElement.status.textContent = statusLabel;
+  summaryElement.status.dataset.status = statusLabel;
+}
+
+function updateAllCategorySummaries() {
+  Object.keys(SKILL_CATEGORIES).forEach((code) => updateCategorySummary(code));
+}
+
+function determineCategoryStatus(total, completed) {
+  if (total === 0) {
+    return "対象なし";
+  }
+
+  if (completed === total) {
+    return "習得済み";
+  }
+
+  if (completed > 0) {
+    return "チャレンジ中";
+  }
+
+  return "未修得";
+}
+
+function initializeCategoryAssignments(items) {
+  Object.keys(SKILL_CATEGORIES).forEach((code) => {
+    categoryItemIds[code] = [];
+  });
+
+  traverseRoadmap(items, (leafItem) => {
+    const categories = Array.isArray(leafItem.skillCategories)
+      ? [...leafItem.skillCategories]
+      : [];
+
+    itemToCategoriesMap[leafItem.id] = categories;
+    itemStatusMap[leafItem.id] = loadItemState(leafItem.id).status || STATUS_OPTIONS[0];
+
+    categories.forEach((code) => {
+      if (!categoryItemIds[code]) {
+        categoryItemIds[code] = [];
+      }
+
+      if (!categoryItemIds[code].includes(leafItem.id)) {
+        categoryItemIds[code].push(leafItem.id);
+      }
+    });
+  });
+}
+
+function traverseRoadmap(items, onLeaf) {
+  items.forEach((item) => {
+    if (item.children && item.children.length > 0) {
+      traverseRoadmap(item.children, onLeaf);
+    } else {
+      onLeaf(item);
+    }
+  });
 }
 
 function appendMeta(metaElement, label, value) {
