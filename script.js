@@ -370,6 +370,7 @@ function createRoadmapItem(item) {
   statusPill.className = "status-pill";
   statusPill.dataset.status = currentStatus;
   statusPill.textContent = currentStatus;
+  listItem.__statusPill = statusPill;
 
   headerButton.appendChild(headerContent);
   headerButton.appendChild(statusPill);
@@ -509,6 +510,23 @@ function updateCompletionSummary(listItem) {
   ).length;
 
   listItem.__completionSummary.textContent = `(${completedCount}/${total})`;
+
+  let computedStatus;
+
+  if (completedCount === total) {
+    computedStatus = "習得済み";
+  } else if (completedCount > 0) {
+    computedStatus = "チャレンジ中";
+  } else {
+    computedStatus = "未習得";
+  }
+
+  listItem.dataset.status = computedStatus;
+
+  if (listItem.__statusPill) {
+    listItem.__statusPill.dataset.status = computedStatus;
+    listItem.__statusPill.textContent = computedStatus;
+  }
 }
 
 function updateCompletionSummaryUpwards(listItem) {
