@@ -400,50 +400,56 @@ function createRoadmapItem(item) {
   const controls = document.createElement("div");
   controls.className = "controls";
 
-  const evaluationGroup = document.createElement("div");
-  evaluationGroup.className = "evaluation-group";
+  const isLeafItem = !item.children || item.children.length === 0;
 
-  EVALUATION_FIELDS.forEach((field) => {
-    const fieldWrapper = document.createElement("label");
-    fieldWrapper.className = "evaluation-field";
+  if (isLeafItem) {
+    const evaluationGroup = document.createElement("div");
+    evaluationGroup.className = "evaluation-group";
 
-    const fieldTitle = document.createElement("span");
-    fieldTitle.textContent = field.label;
+    EVALUATION_FIELDS.forEach((field) => {
+      const fieldWrapper = document.createElement("label");
+      fieldWrapper.className = "evaluation-field";
 
-    const select = document.createElement("select");
-    field.options.forEach((optionValue) => {
-      const option = document.createElement("option");
-      option.value = optionValue;
-      option.textContent = optionValue;
-      select.appendChild(option);
-    });
+      const fieldTitle = document.createElement("span");
+      fieldTitle.textContent = field.label;
 
-    const storedValue =
-      field.key === "status"
-        ? currentStatus
-        : storedState[field.key] || field.options[0];
-    select.value = storedValue;
-
-    select.addEventListener("change", (event) => {
-      const newValue = event.target.value;
-
-      if (field.key === "status") {
-        statusPill.textContent = newValue;
-        statusPill.dataset.status = newValue;
-        listItem.dataset.status = newValue;
-        updateCompletionSummaryUpwards(listItem);
-      }
-
-      saveItemState(item.id, {
-        ...loadItemState(item.id),
-        [field.key]: newValue
+      const select = document.createElement("select");
+      field.options.forEach((optionValue) => {
+        const option = document.createElement("option");
+        option.value = optionValue;
+        option.textContent = optionValue;
+        select.appendChild(option);
       });
+
+      const storedValue =
+        field.key === "status"
+          ? currentStatus
+          : storedState[field.key] || field.options[0];
+      select.value = storedValue;
+
+      select.addEventListener("change", (event) => {
+        const newValue = event.target.value;
+
+        if (field.key === "status") {
+          statusPill.textContent = newValue;
+          statusPill.dataset.status = newValue;
+          listItem.dataset.status = newValue;
+          updateCompletionSummaryUpwards(listItem);
+        }
+
+        saveItemState(item.id, {
+          ...loadItemState(item.id),
+          [field.key]: newValue
+        });
+      });
+
+      fieldWrapper.appendChild(fieldTitle);
+      fieldWrapper.appendChild(select);
+      evaluationGroup.appendChild(fieldWrapper);
     });
 
-    fieldWrapper.appendChild(fieldTitle);
-    fieldWrapper.appendChild(select);
-    evaluationGroup.appendChild(fieldWrapper);
-  });
+    controls.appendChild(evaluationGroup);
+  }
 
   const memoLabel = document.createElement("label");
   memoLabel.className = "memo-field";
@@ -461,7 +467,6 @@ function createRoadmapItem(item) {
   memoLabel.appendChild(memoTitle);
   memoLabel.appendChild(memoTextarea);
 
-  controls.appendChild(evaluationGroup);
   controls.appendChild(memoLabel);
 
   body.appendChild(controls);
