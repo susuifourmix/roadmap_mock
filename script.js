@@ -11,268 +11,280 @@ const EVALUATION_FIELDS = [
   { key: "othersEvaluation", label: "他者評価", options: EVALUATION_LEVEL_OPTIONS }
 ];
 
+const SKILL_CATEGORIES = {
+  A: { label: "IT全般（業務知識）" },
+  B: { label: "アーキテクト" },
+  C: { label: "進行管理" },
+  D: { label: "設計" },
+  E: { label: "デベロップ" }
+};
+
 const roadmapData = [
   {
-    id: "intake",
-    name: "受注",
+    id: "proposal",
+    name: "提案",
     description:
-      "案件受注から提案までの段取りを整理し、プロジェクトの期待値をそろえる。",
+      "顧客の課題を整理し、解決策と進め方を提示して合意形成を行うフェーズ。",
     children: [
       {
-        id: "project-roadmap",
-        name: "プロジェクトロードマップ",
-        description:
-          "プロジェクト開始から完了までの工程やマイルストーンを俯瞰し、全体像を関係者と共有する。"
+        id: "proposal-product-roadmap",
+        name: "プロダクトロードマップ（提案機能の説明）",
+        deliverable: "提案資料",
+        skillCategories: ["A"],
+        skillSubcategory: "IT全般（業務知識）",
+        requiredSkill: "機能構成図を描くことができる"
       },
       {
-        id: "stakeholder-alignment",
-        name: "ステークホルダー調整",
-        description:
-          "主要メンバーの役割や意思決定プロセスを整理し、合意形成の土台を整える。"
+        id: "proposal-release-plan",
+        name: "リリース計画（コスト試算）",
+        deliverable: "概算見積・開発体制図",
+        skillCategories: ["A", "C"],
+        skillSubcategory: "IT全般（業務知識）・進行管理",
+        requiredSkill: "機能見積もり・工数算出ができる"
       },
       {
-        id: "schedule-coordination",
-        name: "スケジュール調整",
-        description:
-          "関係者の予定と前提条件を踏まえてマイルストーンとタスクの実行時期を調整する。"
+        id: "proposal-market-research",
+        name: "市場調査・分析",
+        deliverable: "調査報告書",
+        skillCategories: ["A"],
+        skillSubcategory: "IT全般",
+        requiredSkill: "類似システムの比較検討資料を作成することができる"
       },
       {
-        id: "issues-risks",
-        name: "課題・懸念点",
-        description:
-          "想定される課題やリスクを洗い出し、対応策やエスカレーション経路を明確にする。"
-      },
-      {
-        id: "proposal",
-        name: "提案書",
-        description:
-          "背景・課題・解決策・効果を整理した提案資料を作成し、顧客と合意する。"
-      },
-      {
-        id: "cost-estimation",
-        name: "費用・見積",
-        description:
-          "工数や外部コストの根拠を明示した見積もりを提示し、予算計画を支援する。"
+        id: "proposal-technology-research",
+        name: "技術調査",
+        deliverable: "内向け技術助資料",
+        skillCategories: ["B"],
+        skillSubcategory: "アーキテクト",
+        requiredSkill: "採用を検討する技術ごとに技術的に使えるかどうか検証できる"
       }
     ]
   },
   {
     id: "requirements",
     name: "要件定義",
-    description:
-      "期待する成果を具体化し、関係者間で共通理解をつくるフェーズのスキル。",
+    description: "期待する成果と体制を具体的な要件に落とし込むフェーズ。",
     children: [
       {
-        id: "functional-requirements",
+        id: "requirements-functional",
         name: "機能要件",
-        description:
-          "ユーザーが実現したい行動やユースケースを整理し、必要な機能を明文化する。"
+        deliverable: "要件定義書",
+        skillCategories: ["D"],
+        skillSubcategory: "設計",
+        requiredSkill: "案件要件を明確化のもと進行ができる"
       },
       {
-        id: "business-requirements",
-        name: "業務要件",
-        description:
-          "現行業務の流れや制約を把握し、システム化に伴う変更点を定義する。"
+        id: "requirements-business-flow",
+        name: "運用・業務フロー",
+        deliverable: "業務フロー",
+        skillCategories: ["D"],
+        skillSubcategory: "設計",
+        requiredSkill: "業務要件イメージをユーザーの運用落とし組むことができる"
       },
       {
-        id: "requirement-hearing",
-        name: "要件ヒアリング",
-        description:
-          "関係者へのヒアリングを通じてニーズ・課題・期待値を把握し、漏れなく要件を収集する。"
+        id: "requirements-feasibility",
+        name: "フィジビリティー（技術検証）",
+        deliverable: "内向け技術助資料",
+        skillCategories: ["B"],
+        skillSubcategory: "アーキテクト",
+        requiredSkill: "案件要件を満たすことができる技術かどうか検証できる"
       },
       {
-        id: "facilitation",
-        name: "ファシリテーション",
-        description:
-          "会議やワークショップを設計・進行し、意見を引き出して合意形成につなげる。"
-      },
-      {
-        id: "acceptance-criteria",
-        name: "受入条件",
-        description:
-          "成果物を受け入れる判断基準と確認方法を定義し、品質の期待値を合わせる。"
-      },
-      {
-        id: "requirements-document",
-        name: "要件定義書",
-        description:
-          "決定した要件を構造化して文書化し、レビューと承認プロセスを整備する。"
+        id: "requirements-schedule",
+        name: "スケジュール計画・チームビルディング",
+        deliverable: "体制図",
+        skillCategories: ["C"],
+        skillSubcategory: "進行管理",
+        requiredSkill: "プロジェクトに必要な要因確保、計画立てることができる"
       }
     ]
   },
   {
     id: "design",
     name: "設計",
-    description:
-      "要件を実現するための具体的な仕組みや構成を設計する段階のスキル。",
+    description: "要件を実現する仕組みと構成を設計するフェーズ。",
     children: [
       {
-        id: "prototype",
-        name: "プロトタイプ",
-        description:
-          "画面遷移や操作感を可視化する試作をつくり、要件の妥当性を検証する。"
+        id: "design-prototype",
+        name: "プロトタイプ（UI試設・デザイン）",
+        deliverable: "モック",
+        skillCategories: ["E"],
+        skillSubcategory: "デベロップ",
+        requiredSkill: "機能要件から画面構成が作成できる"
       },
       {
-        id: "design-assets",
-        name: "設計資料（画面・デザイン）",
-        description:
-          "UI方針やレイアウト、スタイルガイドなどの設計資料を整え、合意形成を行う。"
+        id: "design-functional",
+        name: "機能設計（DB設計・動作仕様設計）",
+        deliverable: "ER図、詳細設計書",
+        skillCategories: ["D"],
+        skillSubcategory: "設計",
+        requiredSkill: "機能要件から動作要件、データ構成を作成できる"
       },
       {
-        id: "technical-spec",
-        name: "技術仕様（API・DB）",
-        description:
-          "API設計やデータモデル、インターフェース仕様を定義し、開発の指針を示す。"
+        id: "design-infrastructure",
+        name: "インフラ",
+        deliverable: "構成図",
+        skillCategories: ["B", "D"],
+        skillSubcategory: "設計・アーキテクト",
+        requiredSkill: "インフラ構成が作成できる"
       },
       {
-        id: "infrastructure-design",
-        name: "インフラ（環境・構成設計）",
-        description:
-          "ネットワーク構成、セキュリティ、スケーリングを考慮したインフラ設計をまとめる。"
-      },
-      {
-        id: "nonfunctional-design",
-        name: "非機能設計（性能・セキュリティ）",
-        description:
-          "性能・可用性・セキュリティなど非機能要件を満たすための方針を策定する。"
-      },
-      {
-        id: "test-plan",
-        name: "テスト計画",
-        description:
-          "テスト観点・責務・スケジュールを整理し、品質確保の進め方を定義する。"
+        id: "design-quality-plan",
+        name: "品質計画（保守・拡張性検証）",
+        deliverable: "ドキュメント",
+        skillCategories: ["A", "B"],
+        skillSubcategory: "IT全般（業務知識）・アーキテクト",
+        requiredSkill: "利用技術の評価方法を運用に落とすことができる"
       }
     ]
   },
   {
-    id: "execution",
-    name: "構築",
-    description:
-      "設計を基に開発を進め、チームとして成果物を完成させるためのスキル。",
+    id: "implementation",
+    name: "実装",
+    description: "環境構築と開発・テストを進めて成果物を作り上げるフェーズ。",
     children: [
       {
-        id: "team-management",
-        name: "チームマネジメント",
-        description:
-          "体制や役割、コミュニケーションルールを整え、チームが動きやすい環境をつくる。"
+        id: "implementation-team-management",
+        name: "チームマネージメント",
+        deliverable: "WBS",
+        skillCategories: ["C"],
+        skillSubcategory: "進行管理",
+        requiredSkill: "実装スケジュールを管理し作業遅延に対してフォロー施策を実施できる"
       },
       {
-        id: "development-environment",
-        name: "開発環境",
-        description:
-          "ローカル・共有環境、CIなどの準備を整え、開発をスムーズに立ち上げる。"
+        id: "implementation-asset-preparation",
+        name: "原稿準備（テキスト・画像）",
+        deliverable: "リソース",
+        skillCategories: ["C"],
+        skillSubcategory: "進行管理",
+        requiredSkill: "必要要項の収集、要員調整の調整ができる"
       },
       {
-        id: "development-progress",
-        name: "開発進捗",
-        description:
-          "タスク管理やバーンダウンなどで進捗を可視化し、課題を早期に検知する。"
+        id: "implementation-environment",
+        name: "環境構築（開発環境・インフラ構築）",
+        deliverable: "Docker・Cloud",
+        skillCategories: ["B"],
+        skillSubcategory: "アーキテクト",
+        requiredSkill: "本番環境の構築、開発環境の構築ができる"
       },
       {
-        id: "reviews",
-        name: "レビュー",
-        description:
-          "仕様レビューやコードレビューを実施し、品質と認識のズレを是正する。"
+        id: "implementation-coding-html",
+        name: "実装（コーディング）",
+        deliverable: "ソース",
+        skillCategories: ["E"],
+        skillSubcategory: "デベロップ",
+        requiredSkill: "プログラムの実装ができる（フロントコーディング html css）"
       },
       {
-        id: "training",
-        name: "教育・研修",
-        description:
-          "新メンバーのオンボーディングやナレッジ共有を行い、チーム力を底上げする。"
+        id: "implementation-coding-vue",
+        name: "実装（コーディング）",
+        deliverable: "ソース",
+        skillCategories: ["E"],
+        skillSubcategory: "デベロップ",
+        requiredSkill: "プログラムの実装ができる（フロント vue）"
       },
       {
-        id: "testing",
+        id: "implementation-coding-react",
+        name: "実装（コーディング）",
+        deliverable: "ソース",
+        skillCategories: ["E"],
+        skillSubcategory: "デベロップ",
+        requiredSkill: "プログラムの実装ができる（フロント react）"
+      },
+      {
+        id: "implementation-coding-laravel",
+        name: "実装（コーディング）",
+        deliverable: "ソース",
+        skillCategories: ["E"],
+        skillSubcategory: "デベロップ",
+        requiredSkill: "プログラムの実装ができる（バック laravel）"
+      },
+      {
+        id: "implementation-coding-node",
+        name: "実装（コーディング）",
+        deliverable: "ソース",
+        skillCategories: ["E"],
+        skillSubcategory: "デベロップ",
+        requiredSkill: "プログラムの実装ができる（バック node）"
+      },
+      {
+        id: "implementation-coding-python",
+        name: "実装（コーディング）",
+        deliverable: "ソース",
+        skillCategories: ["E"],
+        skillSubcategory: "デベロップ",
+        requiredSkill: "プログラムの実装ができる（バック python）"
+      },
+      {
+        id: "implementation-testing",
         name: "テスト",
-        description:
-          "単体・結合・受入テストを計画通りに実施し、品質基準を満たしているか確認する。"
+        deliverable: "テスト仕様書・エビデンス",
+        skillCategories: ["D"],
+        skillSubcategory: "設計・実装",
+        requiredSkill: "仕様書からテスト設計ができる"
       }
     ]
   },
   {
     id: "release",
     name: "リリース",
-    description:
-      "システムを利用環境へ届けるための準備とリスクコントロールを担うスキル。",
+    description: "本番環境への移行と利用開始を支援するフェーズ。",
     children: [
       {
-        id: "release-plan",
-        name: "リリース",
-        description:
-          "リリース判定の基準や実施日程、影響範囲を整理し、安全に公開できる体制を整える。"
+        id: "release-data-migration",
+        name: "データ移行",
+        deliverable: "データ移行テーブル",
+        skillCategories: ["D", "E"],
+        skillSubcategory: "設計・デベロップ",
+        requiredSkill: "データ移行方法を設計ができる"
       },
       {
-        id: "migration-plan",
-        name: "移行計画",
-        description:
-          "データ移行や切り戻し方法を含む移行手順を設計し、想定外の事態に備える。"
-      },
-      {
-        id: "release-procedure",
-        name: "リリース手順",
-        description:
-          "実行担当者・作業手順・チェックリストを整え、当日の運用を確実にする。"
-      },
-      {
-        id: "known-issues",
-        name: "既知課題",
-        description:
-          "既知の制約や残課題を整理し、関係者に共有してフォロー体制を整える。"
-      },
-      {
-        id: "documentation",
-        name: "ドキュメント",
-        description:
-          "マニュアルやFAQ、リリースノートを整備し、ユーザーとサポート体制へ引き継ぐ。"
-      },
-      {
-        id: "support-transition",
-        name: "サポート引き継ぎ",
-        description:
-          "運用チームへの引き継ぎ内容とサポートフローを確認し、リリース後の対応を円滑にする。"
+        id: "release-adoption-support",
+        name: "導入支援（受入サポート・操作説明会）",
+        deliverable: "操作説明書",
+        skillCategories: ["C"],
+        skillSubcategory: "進行管理",
+        requiredSkill: "操作説明書を作成できる"
       }
     ]
   },
   {
     id: "operations",
     name: "運用",
-    description:
-      "リリース後の品質維持と継続的な改善を実現するためのスキル。",
+    description: "リリース後の安定稼働と改善を推進するフェーズ。",
     children: [
       {
-        id: "hypercare",
-        name: "ハイパーケア",
-        description:
-          "リリース直後の集中的なモニタリングと支援体制を整え、障害を迅速に検知・対応する。"
+        id: "operations-helpdesk",
+        name: "ヘルプデスク",
+        deliverable: "問い合わせ対応",
+        skillCategories: ["C", "D", "E"],
+        skillSubcategory: "進行管理・設計・デベロップ",
+        requiredSkill: "問い合わせ内容を把握し、修正内容をドキュメント化できる"
       },
       {
-        id: "inquiry-response",
-        name: "問い合わせ対応",
-        description:
-          "問い合わせ窓口やSLAを定義し、ユーザーからの質問や要望を適切に処理する。"
+        id: "operations-monitoring",
+        name: "リリース監視（パフォーマンス・不正）",
+        deliverable: "監視・バグ対応",
+        skillCategories: ["C", "B"],
+        skillSubcategory: "進行管理・アーキテクト",
+        requiredSkill:
+          "リリース監視として原因特定できる。自分参加したプロジェクトの場合・他案件でドキュメントがある場合・他案件でドキュメントがない場合"
       },
       {
-        id: "operations-support",
-        name: "運用支援",
-        description:
-          "運用手順や監視ポイントを整理し、日々のオペレーションを支援する。"
+        id: "operations-maintenance",
+        name: "保守管理",
+        deliverable: "障害管理票・更新作業",
+        skillCategories: ["C"],
+        skillSubcategory: "進行管理",
+        requiredSkill: "障害管理ができる。更新作業の管理ができる"
       },
       {
-        id: "improvement-initiatives",
-        name: "改善施策",
-        description:
-          "定量・定性データを分析し、継続的な改善アクションを企画・推進する。"
-      },
-      {
-        id: "version-management",
-        name: "バージョン管理",
-        description:
-          "バージョン方針や適用履歴を管理し、リリース状況を関係者と共有する。"
-      },
-      {
-        id: "knowledge-sharing",
-        name: "ナレッジ共有",
-        description:
-          "学びや事例をドキュメント・勉強会で共有し、組織の知見を蓄積する。"
+        id: "operations-feature-enhancement",
+        name: "機能追加対応",
+        deliverable: "機能追加設計・実装適用",
+        skillCategories: ["A"],
+        skillSubcategory: "IT全般（業務知識）・アーキテクト・設計",
+        requiredSkill: "機能追加打ち合わせの進行ができる。機能見積もり・工数算出ができる"
       }
     ]
   }
@@ -306,22 +318,55 @@ function createRoadmapItem(item) {
   headerButton.type = "button";
   headerButton.className = "item-header";
 
-  const titleWrapper = document.createElement("div");
+  const headerContent = document.createElement("div");
+  headerContent.className = "item-header-content";
+
   const title = document.createElement("div");
+  title.className = "item-title";
   title.textContent = item.name;
-  const description = document.createElement("div");
-  description.textContent = item.description;
-  description.className = "item-description";
-  titleWrapper.appendChild(title);
-  titleWrapper.appendChild(description);
+  headerContent.appendChild(title);
+
+  if (item.skillCategories && item.skillCategories.length > 0) {
+    const labelContainer = document.createElement("div");
+    labelContainer.className = "skill-labels";
+
+    item.skillCategories.forEach((code) => {
+      const info = SKILL_CATEGORIES[code];
+      if (!info) {
+        return;
+      }
+
+      const label = document.createElement("span");
+      label.className = `skill-label skill-label-${code.toLowerCase()}`;
+      label.textContent = `${code}：${info.label}`;
+      labelContainer.appendChild(label);
+    });
+
+    if (labelContainer.childElementCount > 0) {
+      headerContent.appendChild(labelContainer);
+    }
+  }
+
+  if (item.description) {
+    const description = document.createElement("div");
+    description.className = "item-description";
+    description.textContent = item.description;
+    headerContent.appendChild(description);
+  }
 
   const statusPill = document.createElement("span");
   statusPill.className = "status-pill";
   statusPill.dataset.status = currentStatus;
   statusPill.textContent = currentStatus;
 
-  headerButton.appendChild(titleWrapper);
+  headerButton.appendChild(headerContent);
   headerButton.appendChild(statusPill);
+
+  const body = document.createElement("div");
+  body.className = "item-body";
+  if (storedState.expanded) {
+    body.classList.add("active");
+  }
 
   headerButton.addEventListener("click", () => {
     const isActive = body.classList.toggle("active");
@@ -331,10 +376,13 @@ function createRoadmapItem(item) {
     });
   });
 
-  const body = document.createElement("div");
-  body.className = "item-body";
-  if (storedState.expanded) {
-    body.classList.add("active");
+  const meta = document.createElement("dl");
+  meta.className = "item-meta";
+  appendMeta(meta, "成果物・作業メニュー", item.deliverable);
+  appendMeta(meta, "スキル小分類", item.skillSubcategory);
+  appendMeta(meta, "必要スキル", item.requiredSkill);
+  if (meta.childElementCount > 0) {
+    body.appendChild(meta);
   }
 
   const controls = document.createElement("div");
@@ -416,6 +464,20 @@ function createRoadmapItem(item) {
   listItem.appendChild(body);
 
   return listItem;
+}
+
+function appendMeta(metaElement, label, value) {
+  if (!value) {
+    return;
+  }
+
+  const dt = document.createElement("dt");
+  dt.textContent = label;
+  const dd = document.createElement("dd");
+  dd.textContent = value;
+
+  metaElement.appendChild(dt);
+  metaElement.appendChild(dd);
 }
 
 function loadItemState(id) {
