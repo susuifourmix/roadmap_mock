@@ -72,9 +72,10 @@ header h1 {
 
 .summary-chart-canvas {
   width: 100%;
-  max-width: 100%;
-  aspect-ratio: 1;
-  min-height: 260px;
+  max-width: 360px;
+  max-height: 360px;
+  display: block;
+  margin: 0 auto;
 }
 
 .roadmap ul {
