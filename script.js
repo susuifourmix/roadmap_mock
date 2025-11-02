@@ -22,7 +22,11 @@ const SKILL_CATEGORIES = {
 const itemStatusMap = {};
 const itemToCategoriesMap = {};
 const categoryItemIds = {};
-const categorySummaryElements = {};
+const majorItemLeafIds = {};
+const majorItemInfo = {};
+let majorItemOrder = [];
+let categoryRadarChart = null;
+let majorRadarChart = null;
 
 const roadmapData = [
   {
@@ -305,7 +309,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   container.appendChild(createList(roadmapData));
-  updateAllCategorySummaries();
+  initializeRadarCharts();
+  updateRadarCharts();
 });
 
 function createList(items) {
@@ -524,49 +529,41 @@ function createCategorySummarySection() {
   section.className = "category-summary";
 
   const heading = document.createElement("h2");
-  heading.textContent = "分類別習得状況";
+  heading.textContent = "習得状況";
   section.appendChild(heading);
 
-  const list = document.createElement("ul");
-  list.className = "category-summary-list";
+  const chartsWrapper = document.createElement("div");
+  chartsWrapper.className = "summary-charts";
 
-  Object.entries(SKILL_CATEGORIES).forEach(([code, info]) => {
-    const itemIds = categoryItemIds[code] || [];
-    const listItem = document.createElement("li");
-    listItem.className = "category-summary-item";
+  const categoryBlock = document.createElement("div");
+  categoryBlock.className = "summary-chart-block";
 
-    const codeSpan = document.createElement("span");
-    codeSpan.className = "category-summary-code";
-    codeSpan.textContent = code;
+  const categoryHeading = document.createElement("h3");
+  categoryHeading.textContent = "分類別習得状況";
+  categoryBlock.appendChild(categoryHeading);
 
-    const labelSpan = document.createElement("span");
-    labelSpan.className = "category-summary-label";
-    labelSpan.textContent = info.label;
+  const categoryCanvas = document.createElement("canvas");
+  categoryCanvas.id = "categoryRadarChart";
+  categoryCanvas.className = "summary-chart-canvas";
+  categoryBlock.appendChild(categoryCanvas);
 
-    const progressSpan = document.createElement("span");
-    progressSpan.className = "category-summary-progress";
-    progressSpan.textContent = `（0/${itemIds.length}）`;
+  chartsWrapper.appendChild(categoryBlock);
 
-    const statusSpan = document.createElement("span");
-    statusSpan.className = "category-summary-status";
-    statusSpan.dataset.status = "未修得";
-    statusSpan.textContent = "未修得";
+  const majorBlock = document.createElement("div");
+  majorBlock.className = "summary-chart-block";
 
-    listItem.appendChild(codeSpan);
-    listItem.appendChild(labelSpan);
-    listItem.appendChild(progressSpan);
-    listItem.appendChild(statusSpan);
+  const majorHeading = document.createElement("h3");
+  majorHeading.textContent = "大項目の状態";
+  majorBlock.appendChild(majorHeading);
 
-    list.appendChild(listItem);
+  const majorCanvas = document.createElement("canvas");
+  majorCanvas.id = "majorRadarChart";
+  majorCanvas.className = "summary-chart-canvas";
+  majorBlock.appendChild(majorCanvas);
 
-    categorySummaryElements[code] = {
-      item: listItem,
-      progress: progressSpan,
-      status: statusSpan
-    };
-  });
+  chartsWrapper.appendChild(majorBlock);
 
-  section.appendChild(list);
+  section.appendChild(chartsWrapper);
 
   return section;
 }
@@ -622,54 +619,176 @@ function updateCompletionSummaryUpwards(listItem) {
   }
 }
 
-function updateCategorySummariesForItem(itemId) {
-  const categories = itemToCategoriesMap[itemId];
+function updateCategorySummariesForItem(_itemId) {
+  updateRadarCharts();
+}
 
-  if (!categories || categories.length === 0) {
+function initializeRadarCharts() {
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js is not available. Radar charts will not be rendered.");
     return;
   }
 
-  categories.forEach((code) => updateCategorySummary(code));
+  const categoryCanvas = document.getElementById("categoryRadarChart");
+  const majorCanvas = document.getElementById("majorRadarChart");
+
+  if (categoryCanvas) {
+    const { labels, data } = computeCategoryRadarData();
+
+    if (categoryRadarChart) {
+      categoryRadarChart.destroy();
+    }
+
+    categoryRadarChart = new Chart(categoryCanvas.getContext("2d"), {
+      type: "radar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "達成率（%）",
+            data,
+            backgroundColor: "rgba(37, 99, 235, 0.2)",
+            borderColor: "rgba(37, 99, 235, 0.8)",
+            pointBackgroundColor: "rgba(37, 99, 235, 1)",
+            pointBorderColor: "#fff"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            min: 0,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: (value) => `${value}%`
+            }
+          }
+        }
+      }
+    });
+  }
+
+  if (majorCanvas) {
+    const { labels, data } = computeMajorRadarData();
+
+    if (majorRadarChart) {
+      majorRadarChart.destroy();
+    }
+
+    majorRadarChart = new Chart(majorCanvas.getContext("2d"), {
+      type: "radar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "達成率（%）",
+            data,
+            backgroundColor: "rgba(34, 197, 94, 0.2)",
+            borderColor: "rgba(34, 197, 94, 0.8)",
+            pointBackgroundColor: "rgba(34, 197, 94, 1)",
+            pointBorderColor: "#fff"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            min: 0,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: (value) => `${value}%`
+            }
+          }
+        }
+      }
+    });
+  }
 }
 
-function updateCategorySummary(code) {
-  const summaryElement = categorySummaryElements[code];
+function updateRadarCharts() {
+  updateCategoryRadarChart();
+  updateMajorRadarChart();
+}
 
-  if (!summaryElement) {
+function updateCategoryRadarChart() {
+  if (!categoryRadarChart) {
     return;
   }
 
-  const itemIds = categoryItemIds[code] || [];
-  const total = itemIds.length;
-  const completed = itemIds.filter(
-    (itemId) => (itemStatusMap[itemId] || STATUS_OPTIONS[0]) === "習得済み"
-  ).length;
-
-  const statusLabel = determineCategoryStatus(total, completed);
-
-  summaryElement.progress.textContent = `（${completed}/${total}）`;
-  summaryElement.status.textContent = statusLabel;
-  summaryElement.status.dataset.status = statusLabel;
+  const { labels, data } = computeCategoryRadarData();
+  categoryRadarChart.data.labels = labels;
+  categoryRadarChart.data.datasets[0].data = data;
+  categoryRadarChart.update();
 }
 
-function updateAllCategorySummaries() {
-  Object.keys(SKILL_CATEGORIES).forEach((code) => updateCategorySummary(code));
+function updateMajorRadarChart() {
+  if (!majorRadarChart) {
+    return;
+  }
+
+  const { labels, data } = computeMajorRadarData();
+  majorRadarChart.data.labels = labels;
+  majorRadarChart.data.datasets[0].data = data;
+  majorRadarChart.update();
 }
 
-function determineCategoryStatus(total, completed) {
-  if (total === 0) {
-    return "対象なし";
-  }
+function computeCategoryRadarData() {
+  const labels = [];
+  const data = [];
 
-  if (completed === total) {
-    return "習得済み";
-  }
+  Object.entries(SKILL_CATEGORIES).forEach(([code, info]) => {
+    const itemIds = categoryItemIds[code] || [];
+    const total = itemIds.length;
+    const completed = itemIds.filter(
+      (itemId) => (itemStatusMap[itemId] || STATUS_OPTIONS[0]) === "習得済み"
+    ).length;
 
-  if (completed > 0) {
-    return "チャレンジ中";
-  }
+    labels.push(`${code}：${info.label}`);
+    data.push(total === 0 ? 0 : Math.round((completed / total) * 100));
+  });
 
-  return "未修得";
+  return { labels, data };
+}
+
+function computeMajorRadarData() {
+  const labels = [];
+  const data = [];
+
+  majorItemOrder.forEach((id) => {
+    const info = majorItemInfo[id];
+    if (!info) {
+      return;
+    }
+
+    const leafIds = majorItemLeafIds[id] || [];
+    const total = leafIds.length;
+    const completed = leafIds.filter(
+      (itemId) => (itemStatusMap[itemId] || STATUS_OPTIONS[0]) === "習得済み"
+    ).length;
+
+    labels.push(info.name);
+    data.push(total === 0 ? 0 : Math.round((completed / total) * 100));
+  });
+
+  return { labels, data };
 }
 
 function initializeCategoryAssignments(items) {
@@ -677,7 +796,21 @@ function initializeCategoryAssignments(items) {
     categoryItemIds[code] = [];
   });
 
-  traverseRoadmap(items, (leafItem) => {
+  Object.keys(majorItemLeafIds).forEach((key) => {
+    delete majorItemLeafIds[key];
+  });
+  Object.keys(majorItemInfo).forEach((key) => {
+    delete majorItemInfo[key];
+  });
+  majorItemOrder = [];
+
+  items.forEach((item) => {
+    majorItemOrder.push(item.id);
+    majorItemInfo[item.id] = { name: item.name };
+    majorItemLeafIds[item.id] = [];
+  });
+
+  traverseRoadmap(items, (leafItem, ancestors) => {
     const categories = Array.isArray(leafItem.skillCategories)
       ? [...leafItem.skillCategories]
       : [];
@@ -694,15 +827,28 @@ function initializeCategoryAssignments(items) {
         categoryItemIds[code].push(leafItem.id);
       }
     });
+
+    const topLevel = ancestors && ancestors.length > 0 ? ancestors[0] : leafItem;
+    if (topLevel) {
+      if (!majorItemLeafIds[topLevel.id]) {
+        majorItemLeafIds[topLevel.id] = [];
+      }
+
+      if (!majorItemLeafIds[topLevel.id].includes(leafItem.id)) {
+        majorItemLeafIds[topLevel.id].push(leafItem.id);
+      }
+    }
   });
 }
 
-function traverseRoadmap(items, onLeaf) {
+function traverseRoadmap(items, onLeaf, ancestors = []) {
   items.forEach((item) => {
+    const nextAncestors = [...ancestors, item];
+
     if (item.children && item.children.length > 0) {
-      traverseRoadmap(item.children, onLeaf);
+      traverseRoadmap(item.children, onLeaf, nextAncestors);
     } else {
-      onLeaf(item);
+      onLeaf(item, ancestors);
     }
   });
 }
