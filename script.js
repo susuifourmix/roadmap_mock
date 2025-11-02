@@ -27,6 +27,10 @@ const majorItemInfo = {};
 let majorItemOrder = [];
 let categoryRadarChart = null;
 let majorRadarChart = null;
+const RADAR_CANVAS_MIN_SIZE = 200;
+const RADAR_CANVAS_MAX_SIZE = 360;
+const radarCanvasListeners = new WeakMap();
+let radarChartsUpdateQueued = false;
 
 const roadmapData = [
   {
@@ -620,7 +624,76 @@ function updateCompletionSummaryUpwards(listItem) {
 }
 
 function updateCategorySummariesForItem(_itemId) {
-  updateRadarCharts();
+  queueRadarChartsUpdate();
+}
+
+function queueRadarChartsUpdate() {
+  if (radarChartsUpdateQueued) {
+    return;
+  }
+
+  radarChartsUpdateQueued = true;
+  window.requestAnimationFrame(() => {
+    radarChartsUpdateQueued = false;
+    updateRadarCharts();
+  });
+}
+
+function lockRadarCanvasSize(canvas) {
+  if (!(canvas instanceof HTMLCanvasElement)) {
+    return;
+  }
+
+  const parent = canvas.parentElement;
+
+  if (!parent) {
+    return;
+  }
+
+  const existingListener = radarCanvasListeners.get(canvas);
+
+  if (existingListener) {
+    existingListener.disconnect();
+  }
+
+  const applySize = () => {
+    const availableWidth = parent.clientWidth || RADAR_CANVAS_MIN_SIZE;
+    const size =
+      availableWidth >= RADAR_CANVAS_MIN_SIZE
+        ? Math.min(availableWidth, RADAR_CANVAS_MAX_SIZE)
+        : availableWidth;
+
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+
+    if (typeof Chart !== "undefined" && typeof Chart.getChart === "function") {
+      const chart = Chart.getChart(canvas);
+      if (chart) {
+        chart.resize();
+      }
+    }
+  };
+
+  applySize();
+  window.requestAnimationFrame(applySize);
+
+  if (typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(() => {
+      window.requestAnimationFrame(applySize);
+    });
+    observer.observe(parent);
+    radarCanvasListeners.set(canvas, observer);
+  } else {
+    const handler = () => {
+      window.requestAnimationFrame(applySize);
+    };
+    window.addEventListener("resize", handler);
+    radarCanvasListeners.set(canvas, {
+      disconnect() {
+        window.removeEventListener("resize", handler);
+      }
+    });
+  }
 }
 
 function initializeRadarCharts() {
@@ -633,6 +706,7 @@ function initializeRadarCharts() {
   const majorCanvas = document.getElementById("majorRadarChart");
 
   if (categoryCanvas) {
+    lockRadarCanvasSize(categoryCanvas);
     const { labels, data } = computeCategoryRadarData();
 
     if (categoryRadarChart) {
@@ -657,6 +731,8 @@ function initializeRadarCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
+        responsiveAnimationDuration: 0,
         plugins: {
           legend: {
             display: false
@@ -678,6 +754,7 @@ function initializeRadarCharts() {
   }
 
   if (majorCanvas) {
+    lockRadarCanvasSize(majorCanvas);
     const { labels, data } = computeMajorRadarData();
 
     if (majorRadarChart) {
@@ -702,6 +779,8 @@ function initializeRadarCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
+        responsiveAnimationDuration: 0,
         plugins: {
           legend: {
             display: false
