@@ -1,5 +1,15 @@
 const ROADMAP_STORAGE_PREFIX = "roadmap_item_";
 const STATUS_OPTIONS = ["未習得", "チャレンジ中", "習得済み"];
+const EVALUATION_LEVEL_OPTIONS = [
+  "一人で遂行できる",
+  "助言があれば遂行できる",
+  "できない"
+];
+const EVALUATION_FIELDS = [
+  { key: "status", label: "状態", options: STATUS_OPTIONS },
+  { key: "selfEvaluation", label: "自己評価", options: EVALUATION_LEVEL_OPTIONS },
+  { key: "othersEvaluation", label: "他者評価", options: EVALUATION_LEVEL_OPTIONS }
+];
 
 const roadmapData = [
   {
@@ -330,34 +340,54 @@ function createRoadmapItem(item) {
   const controls = document.createElement("div");
   controls.className = "controls";
 
-  const statusLabel = document.createElement("label");
-  statusLabel.textContent = "状態";
-  const statusSelect = document.createElement("select");
-  STATUS_OPTIONS.forEach((status) => {
-    const option = document.createElement("option");
-    option.value = status;
-    option.textContent = status;
-    if (status === currentStatus) {
-      option.selected = true;
-    }
-    statusSelect.appendChild(option);
-  });
+  const evaluationGroup = document.createElement("div");
+  evaluationGroup.className = "evaluation-group";
 
-  statusSelect.addEventListener("change", (event) => {
-    const newStatus = event.target.value;
-    statusPill.textContent = newStatus;
-    statusPill.dataset.status = newStatus;
-    listItem.dataset.status = newStatus;
-    saveItemState(item.id, {
-      ...loadItemState(item.id),
-      status: newStatus
+  EVALUATION_FIELDS.forEach((field) => {
+    const fieldWrapper = document.createElement("label");
+    fieldWrapper.className = "evaluation-field";
+
+    const fieldTitle = document.createElement("span");
+    fieldTitle.textContent = field.label;
+
+    const select = document.createElement("select");
+    field.options.forEach((optionValue) => {
+      const option = document.createElement("option");
+      option.value = optionValue;
+      option.textContent = optionValue;
+      select.appendChild(option);
     });
-  });
 
-  statusLabel.appendChild(statusSelect);
+    const storedValue =
+      field.key === "status"
+        ? currentStatus
+        : storedState[field.key] || field.options[0];
+    select.value = storedValue;
+
+    select.addEventListener("change", (event) => {
+      const newValue = event.target.value;
+
+      if (field.key === "status") {
+        statusPill.textContent = newValue;
+        statusPill.dataset.status = newValue;
+        listItem.dataset.status = newValue;
+      }
+
+      saveItemState(item.id, {
+        ...loadItemState(item.id),
+        [field.key]: newValue
+      });
+    });
+
+    fieldWrapper.appendChild(fieldTitle);
+    fieldWrapper.appendChild(select);
+    evaluationGroup.appendChild(fieldWrapper);
+  });
 
   const memoLabel = document.createElement("label");
-  memoLabel.textContent = "メモ";
+  memoLabel.className = "memo-field";
+  const memoTitle = document.createElement("span");
+  memoTitle.textContent = "メモ";
   const memoTextarea = document.createElement("textarea");
   memoTextarea.placeholder = "学んだことや疑問点をメモしましょう";
   memoTextarea.value = storedState.memo || "";
@@ -367,9 +397,10 @@ function createRoadmapItem(item) {
       memo: event.target.value
     });
   });
+  memoLabel.appendChild(memoTitle);
   memoLabel.appendChild(memoTextarea);
 
-  controls.appendChild(statusLabel);
+  controls.appendChild(evaluationGroup);
   controls.appendChild(memoLabel);
 
   body.appendChild(controls);
