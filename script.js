@@ -391,7 +391,6 @@ function createRoadmapItem(item) {
   const meta = document.createElement("dl");
   meta.className = "item-meta";
   appendMeta(meta, "成果物・作業メニュー", item.deliverable);
-  appendMeta(meta, "スキル小分類", item.skillSubcategory);
   appendMeta(meta, "必要スキル", item.requiredSkill);
   if (meta.childElementCount > 0) {
     body.appendChild(meta);
