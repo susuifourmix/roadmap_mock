@@ -309,6 +309,7 @@ function createList(items) {
 function createRoadmapItem(item) {
   const listItem = document.createElement("li");
   listItem.className = "roadmap-item";
+  listItem.dataset.itemId = item.id;
 
   const storedState = loadItemState(item.id);
   const currentStatus = storedState.status || STATUS_OPTIONS[0];
@@ -323,7 +324,18 @@ function createRoadmapItem(item) {
 
   const title = document.createElement("div");
   title.className = "item-title";
-  title.textContent = item.name;
+
+  const titleText = document.createElement("span");
+  titleText.textContent = item.name;
+  title.appendChild(titleText);
+
+  if (item.children && item.children.length > 0) {
+    const completionSummary = document.createElement("span");
+    completionSummary.className = "completion-summary";
+    listItem.__completionSummary = completionSummary;
+    title.appendChild(completionSummary);
+  }
+
   headerContent.appendChild(title);
 
   if (item.skillCategories && item.skillCategories.length > 0) {
@@ -419,6 +431,7 @@ function createRoadmapItem(item) {
         statusPill.textContent = newValue;
         statusPill.dataset.status = newValue;
         listItem.dataset.status = newValue;
+        updateCompletionSummaryUpwards(listItem);
       }
 
       saveItemState(item.id, {
@@ -456,14 +469,54 @@ function createRoadmapItem(item) {
   if (item.children && item.children.length > 0) {
     const childrenWrapper = document.createElement("div");
     childrenWrapper.className = "children";
-    childrenWrapper.appendChild(createList(item.children));
+    const childList = createList(item.children);
+    childrenWrapper.appendChild(childList);
+    listItem.__childList = childList;
     body.appendChild(childrenWrapper);
   }
 
   listItem.appendChild(headerButton);
   listItem.appendChild(body);
 
+  if (listItem.__completionSummary) {
+    updateCompletionSummary(listItem);
+  }
+
   return listItem;
+}
+
+function updateCompletionSummary(listItem) {
+  if (!listItem.__completionSummary || !listItem.__childList) {
+    return;
+  }
+
+  const childItems = Array.from(
+    listItem.__childList.querySelectorAll(":scope > li.roadmap-item")
+  );
+  const total = childItems.length;
+
+  if (total === 0) {
+    listItem.__completionSummary.textContent = "";
+    return;
+  }
+
+  const completedCount = childItems.filter(
+    (child) => child.dataset.status === "習得済み"
+  ).length;
+
+  listItem.__completionSummary.textContent = `(${completedCount}/${total})`;
+}
+
+function updateCompletionSummaryUpwards(listItem) {
+  let current = listItem;
+
+  while (current && current instanceof HTMLElement) {
+    if (current.__completionSummary) {
+      updateCompletionSummary(current);
+    }
+
+    current = current.parentElement?.closest(".roadmap-item");
+  }
 }
 
 function appendMeta(metaElement, label, value) {
